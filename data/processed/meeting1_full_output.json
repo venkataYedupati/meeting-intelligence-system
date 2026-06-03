@@ -131,19 +131,342 @@
     ],
     "search_results": [
         {
-            "speaker": "John",
-            "text": "The team agreed to delay the product demo until Thursday.",
-            "score": 0.707344138622284
+            "speaker": "Mike",
+            "text": "We decided to schedule a client review next Tuesday.",
+            "score": 0.3184780208528728
         },
         {
             "speaker": "John",
-            "text": "We need to finalize the budget before the demo.",
-            "score": 0.5999665260314941
+            "text": "The team agreed to delay the product demo until Thursday.",
+            "score": 0.2647399391988813
         },
         {
             "speaker": "Sarah",
             "text": "It was finalized that I will prepare the budget summary.",
-            "score": 0.4352994203567505
+            "score": 0.15
+        },
+        {
+            "speaker": "John",
+            "text": "We need to finalize the budget before the demo.",
+            "score": 0.14863770719301161
+        },
+        {
+            "speaker": "John",
+            "text": "We should send the updated proposal by Friday.",
+            "score": 0.0
         }
-    ]
+    ],
+    "agentic": {
+        "mode": "deterministic_multi_agent",
+        "retrieval_backend": "tfidf",
+        "participants": [
+            {
+                "speaker": "John",
+                "turns": 4,
+                "participation_share": 0.4,
+                "action_items_owned": 2,
+                "decisions_contributed": 1
+            },
+            {
+                "speaker": "Sarah",
+                "turns": 3,
+                "participation_share": 0.3,
+                "action_items_owned": 3,
+                "decisions_contributed": 1
+            },
+            {
+                "speaker": "Mike",
+                "turns": 3,
+                "participation_share": 0.3,
+                "action_items_owned": 1,
+                "decisions_contributed": 1
+            }
+        ],
+        "answer": {
+            "query": "What was decided about the demo?",
+            "intent": "decision",
+            "answer": "Based on the strongest meeting evidence, John: The team agreed to delay the product demo until Thursday.",
+            "citations": [
+                {
+                    "speaker": "John",
+                    "text": "The team agreed to delay the product demo until Thursday.",
+                    "score": 0.9,
+                    "source": "decision"
+                }
+            ]
+        },
+        "execution_plan": [
+            {
+                "id": "A1",
+                "task": "Send the updated proposal by Friday.",
+                "owner": "Team",
+                "due_date": "Friday",
+                "priority": "medium",
+                "status": "open",
+                "confidence": 0.9,
+                "evidence": {
+                    "speaker": "John",
+                    "text": "We should send the updated proposal by Friday."
+                }
+            },
+            {
+                "id": "A2",
+                "task": "Take ownership of that.",
+                "owner": "Sarah",
+                "due_date": null,
+                "priority": "normal",
+                "status": "open",
+                "confidence": 0.75,
+                "evidence": {
+                    "speaker": "Sarah",
+                    "text": "I will take ownership of that."
+                }
+            },
+            {
+                "id": "A3",
+                "task": "Send the revised deck tomorrow.",
+                "owner": "Sarah",
+                "due_date": "tomorrow",
+                "priority": "medium",
+                "status": "open",
+                "confidence": 0.9,
+                "evidence": {
+                    "speaker": "Sarah",
+                    "text": "I will send the revised deck tomorrow."
+                }
+            },
+            {
+                "id": "A4",
+                "task": "Schedule the next meeting for Monday.",
+                "owner": "Team",
+                "due_date": "Monday",
+                "priority": "medium",
+                "status": "open",
+                "confidence": 0.9,
+                "evidence": {
+                    "speaker": "Mike",
+                    "text": "Let's schedule the next meeting for Monday."
+                }
+            },
+            {
+                "id": "A5",
+                "task": "It was finalized that I will prepare the budget summary.",
+                "owner": "Sarah",
+                "due_date": null,
+                "priority": "normal",
+                "status": "open",
+                "confidence": 0.75,
+                "evidence": {
+                    "speaker": "Sarah",
+                    "text": "It was finalized that I will prepare the budget summary."
+                }
+            },
+            {
+                "id": "A6",
+                "task": "Finalize the budget before the demo.",
+                "owner": "Team",
+                "due_date": null,
+                "priority": "normal",
+                "status": "open",
+                "confidence": 0.75,
+                "evidence": {
+                    "speaker": "John",
+                    "text": "We need to finalize the budget before the demo."
+                }
+            }
+        ],
+        "decision_register": [
+            {
+                "id": "D1",
+                "decision": "We decided to schedule a client review next Tuesday.",
+                "made_by": "Mike",
+                "status": "confirmed",
+                "topic": "client_review",
+                "downstream_actions": [
+                    "Let's schedule the next meeting for Monday."
+                ],
+                "confidence": 0.88,
+                "evidence": {
+                    "speaker": "Mike",
+                    "text": "We decided to schedule a client review next Tuesday."
+                }
+            },
+            {
+                "id": "D2",
+                "decision": "The team agreed to delay the product demo until Thursday.",
+                "made_by": "John",
+                "status": "confirmed",
+                "topic": "demo",
+                "downstream_actions": [],
+                "confidence": 0.88,
+                "evidence": {
+                    "speaker": "John",
+                    "text": "The team agreed to delay the product demo until Thursday."
+                }
+            },
+            {
+                "id": "D3",
+                "decision": "It was finalized that I will prepare the budget summary.",
+                "made_by": "Sarah",
+                "status": "confirmed",
+                "topic": "budget",
+                "downstream_actions": [
+                    "It was finalized that I will prepare the budget summary."
+                ],
+                "confidence": 0.88,
+                "evidence": {
+                    "speaker": "Sarah",
+                    "text": "It was finalized that I will prepare the budget summary."
+                }
+            }
+        ],
+        "risks": [
+            {
+                "id": "R1",
+                "type": "blocker",
+                "severity": "high",
+                "owner_signal": "John",
+                "description": "The pricing section is still a blocker.",
+                "mitigation_needed": true,
+                "evidence": {
+                    "speaker": "John",
+                    "text": "The pricing section is still a blocker."
+                }
+            },
+            {
+                "id": "R2",
+                "type": "risk",
+                "severity": "medium",
+                "owner_signal": "John",
+                "description": "The team agreed to delay the product demo until Thursday.",
+                "mitigation_needed": true,
+                "evidence": {
+                    "speaker": "John",
+                    "text": "The team agreed to delay the product demo until Thursday."
+                }
+            }
+        ],
+        "follow_up_questions": [
+            {
+                "question": "Who directly owns action item A1?",
+                "reason": "Send the updated proposal by Friday.",
+                "priority": "high",
+                "related_id": "A1"
+            },
+            {
+                "question": "What is the deadline for action item A2?",
+                "reason": "Take ownership of that.",
+                "priority": "medium",
+                "related_id": "A2"
+            },
+            {
+                "question": "Who directly owns action item A4?",
+                "reason": "Schedule the next meeting for Monday.",
+                "priority": "high",
+                "related_id": "A4"
+            },
+            {
+                "question": "What is the deadline for action item A5?",
+                "reason": "It was finalized that I will prepare the budget summary.",
+                "priority": "medium",
+                "related_id": "A5"
+            },
+            {
+                "question": "Who directly owns action item A6?",
+                "reason": "Finalize the budget before the demo.",
+                "priority": "high",
+                "related_id": "A6"
+            },
+            {
+                "question": "What is the deadline for action item A6?",
+                "reason": "Finalize the budget before the demo.",
+                "priority": "medium",
+                "related_id": "A6"
+            },
+            {
+                "question": "What is the mitigation plan for risk R1?",
+                "reason": "The pricing section is still a blocker.",
+                "priority": "high",
+                "related_id": "R1"
+            },
+            {
+                "question": "What is the mitigation plan for risk R2?",
+                "reason": "The team agreed to delay the product demo until Thursday.",
+                "priority": "medium",
+                "related_id": "R2"
+            }
+        ],
+        "quality": {
+            "quality_score": 0.7,
+            "gaps": [
+                "Action items missing deadlines: A2, A5, A6",
+                "Action items missing direct owners: A1, A4, A6"
+            ],
+            "coverage": {
+                "speaker_turns": 10,
+                "action_items": 6,
+                "decisions": 3,
+                "risks_or_dependencies": 2,
+                "follow_up_questions": 8
+            }
+        },
+        "agent_trace": [
+            {
+                "agent": "Participant Profiler Agent",
+                "key": "participants",
+                "role": "Identify speakers, contribution levels, and ownership signals",
+                "status": "completed",
+                "confidence": 0.95,
+                "evidence_count": 10
+            },
+            {
+                "agent": "Action Planning Agent",
+                "key": "execution_plan",
+                "role": "Turn raw action-item mentions into owner, deadline, priority, and evidence",
+                "status": "completed",
+                "confidence": 0.82,
+                "evidence_count": 6
+            },
+            {
+                "agent": "Decision Register Agent",
+                "key": "decision_register",
+                "role": "Normalize decisions with topics, status, and downstream work",
+                "status": "completed",
+                "confidence": 0.88,
+                "evidence_count": 3
+            },
+            {
+                "agent": "Risk and Dependency Agent",
+                "key": "risks",
+                "role": "Find blockers, risks, unresolved dependencies, and open concerns",
+                "status": "completed",
+                "confidence": 0.82,
+                "evidence_count": 2
+            },
+            {
+                "agent": "Query Answer Agent",
+                "key": "answer",
+                "role": "Synthesize an answer from retrieval results and structured meeting evidence",
+                "status": "completed",
+                "confidence": 0.9,
+                "evidence_count": 1
+            },
+            {
+                "agent": "Follow-up Question Agent",
+                "key": "follow_up_questions",
+                "role": "Generate next questions from missing owners, deadlines, and unresolved risks",
+                "status": "completed",
+                "confidence": 0.78,
+                "evidence_count": 8
+            },
+            {
+                "agent": "Quality Gate Agent",
+                "key": "quality",
+                "role": "Score output completeness and list analysis gaps",
+                "status": "completed",
+                "confidence": 0.9,
+                "evidence_count": 10
+            }
+        ]
+    }
 }

@@ -6,6 +6,11 @@ from pydantic import BaseModel
 class MeetingRequest(BaseModel):
     transcript: str
     query: str = "What was decided about the demo?"
+    top_k: int = 3
+
+
+class AgenticMeetingRequest(MeetingRequest):
+    top_k: int = 5
 
 
 class TranscriptRecord(BaseModel):

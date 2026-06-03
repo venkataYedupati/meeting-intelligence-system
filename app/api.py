@@ -1,53 +1,18 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from pydantic import BaseModel
 
-from src.preprocess import (
-    clean_text,
-    split_transcript_lines,
-    parse_transcript_lines,
-    extract_action_items,
-    extract_decisions,
-)
-from src.topics import segment_topics
-from src.search import load_embedding_model, semantic_search
-from src.output_formatter import build_meeting_output
-from src.summary import generate_meeting_summary
+from app.schemas import AgenticMeetingRequest, MeetingRequest
+from src.agentic import run_agentic_analysis
+from src.pipeline import run_pipeline
 
 
-app = FastAPI(title="Meeting Intelligence API", version="1.0.0")
+app = FastAPI(title="Meeting Intelligence API", version="2.0.0")
 
-model = load_embedding_model()
+try:
+    import multipart  # noqa: F401
 
-
-class MeetingRequest(BaseModel):
-    transcript: str
-    query: str = "What was decided about the demo?"
-
-
-def run_pipeline(transcript: str, query: str) -> dict:
-    cleaned_transcript = clean_text(transcript)
-    lines = split_transcript_lines(cleaned_transcript)
-    records = parse_transcript_lines(lines)
-
-    action_items = extract_action_items(records)
-    decisions = extract_decisions(records)
-    topics = segment_topics(records)
-    search_results = semantic_search(query, records, model, top_k=3)
-    summary = generate_meeting_summary(
-        action_items=action_items,
-        decisions=decisions,
-        topics=topics,
-    )
-
-    output = build_meeting_output(
-        summary=summary,
-        action_items=action_items,
-        decisions=decisions,
-        topics=topics,
-        search_results=search_results,
-    )
-
-    return output
+    MULTIPART_AVAILABLE = True
+except ImportError:
+    MULTIPART_AVAILABLE = False
 
 
 @app.get("/")
@@ -57,18 +22,56 @@ def root() -> dict:
 
 @app.post("/analyze")
 def analyze_meeting(request: MeetingRequest) -> dict:
-    return run_pipeline(request.transcript, request.query)
+    return run_pipeline(request.transcript, request.query, top_k=request.top_k)
 
 
-@app.post("/analyze-file")
-async def analyze_meeting_file(
-    file: UploadFile = File(...),
-    query: str = "What was decided about the demo?",
-) -> dict:
-    if not file.filename.endswith(".txt"):
-        raise HTTPException(status_code=400, detail="Only .txt files are supported.")
+@app.post("/analyze-agentic")
+def analyze_meeting_agentic(request: AgenticMeetingRequest) -> dict:
+    return run_agentic_analysis(request.transcript, request.query, top_k=request.top_k)
 
-    content = await file.read()
-    transcript = content.decode("utf-8")
 
-    return run_pipeline(transcript, query)
+if MULTIPART_AVAILABLE:
+
+    @app.post("/analyze-file")
+    async def analyze_meeting_file(
+        file: UploadFile = File(...),
+        query: str = "What was decided about the demo?",
+        top_k: int = 3,
+    ) -> dict:
+        transcript = await _read_txt_upload(file)
+        return run_pipeline(transcript, query, top_k=top_k)
+
+
+    @app.post("/analyze-file-agentic")
+    async def analyze_meeting_file_agentic(
+        file: UploadFile = File(...),
+        query: str = "What was decided about the demo?",
+        top_k: int = 5,
+    ) -> dict:
+        transcript = await _read_txt_upload(file)
+        return run_agentic_analysis(transcript, query, top_k=top_k)
+
+
+    async def _read_txt_upload(file: UploadFile) -> str:
+        if not file.filename or not file.filename.endswith(".txt"):
+            raise HTTPException(status_code=400, detail="Only .txt files are supported.")
+
+        content = await file.read()
+        return content.decode("utf-8")
+
+else:
+
+    @app.post("/analyze-file")
+    async def analyze_meeting_file_unavailable() -> dict:
+        raise HTTPException(
+            status_code=503,
+            detail="Install python-multipart to enable transcript file uploads.",
+        )
+
+
+    @app.post("/analyze-file-agentic")
+    async def analyze_meeting_file_agentic_unavailable() -> dict:
+        raise HTTPException(
+            status_code=503,
+            detail="Install python-multipart to enable transcript file uploads.",
+        )

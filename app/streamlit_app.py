@@ -6,53 +6,20 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
 
-from src.preprocess import (
-    clean_text,
-    split_transcript_lines,
-    parse_transcript_lines,
-    extract_action_items,
-    extract_decisions,
-)
-from src.topics import segment_topics
-from src.search import load_embedding_model, semantic_search
-from src.output_formatter import build_meeting_output
-from src.summary import generate_meeting_summary
+from src.agentic import run_agentic_analysis
+from src.pipeline import run_pipeline
 
 
 st.set_page_config(page_title="Meeting Intelligence System", layout="wide")
 
 st.title("Meeting Intelligence System")
-st.write("Upload a meeting transcript and analyze action items, decisions, topics, and semantic search results.")
-
-model = load_embedding_model()
-
-
-def run_pipeline(transcript: str, query: str) -> dict:
-    cleaned_transcript = clean_text(transcript)
-    lines = split_transcript_lines(cleaned_transcript)
-    records = parse_transcript_lines(lines)
-
-    action_items = extract_action_items(records)
-    decisions = extract_decisions(records)
-    topics = segment_topics(records)
-    search_results = semantic_search(query, records, model, top_k=3)
-    summary = generate_meeting_summary(
-        action_items=action_items,
-        decisions=decisions,
-        topics=topics,
-    )
-
-    return build_meeting_output(
-        summary=summary,
-        action_items=action_items,
-        decisions=decisions,
-        topics=topics,
-        search_results=search_results,
-    )
+st.write("Upload a meeting transcript and analyze action items, decisions, topics, semantic search, and agentic insights.")
 
 
 uploaded_file = st.file_uploader("Upload transcript (.txt)", type=["txt"])
 query = st.text_input("Ask a question about the meeting", value="What was decided about the demo?")
+analysis_mode = st.radio("Analysis mode", ["Agentic", "Standard"], horizontal=True)
+top_k = st.slider("Search results", min_value=1, max_value=10, value=5 if analysis_mode == "Agentic" else 3)
 
 if uploaded_file is not None:
     transcript = StringIO(uploaded_file.getvalue().decode("utf-8")).read()
@@ -62,9 +29,40 @@ if uploaded_file is not None:
 
     if st.button("Analyze Meeting"):
         with st.spinner("Analyzing meeting..."):
-            output = run_pipeline(transcript, query)
+            if analysis_mode == "Agentic":
+                output = run_agentic_analysis(transcript, query, top_k=top_k)
+            else:
+                output = run_pipeline(transcript, query, top_k=top_k)
 
         st.success("Analysis complete")
+
+        if output.get("agentic"):
+            agentic = output["agentic"]
+
+            st.subheader("Agentic Answer")
+            st.write(agentic["answer"].get("answer", "No answer generated."))
+
+            plan_tab, decision_tab, risk_tab, question_tab, quality_tab, trace_tab = st.tabs(
+                ["Plan", "Decisions", "Risks", "Questions", "Quality", "Trace"]
+            )
+
+            with plan_tab:
+                st.json(agentic["execution_plan"])
+
+            with decision_tab:
+                st.json(agentic["decision_register"])
+
+            with risk_tab:
+                st.json(agentic["risks"])
+
+            with question_tab:
+                st.json(agentic["follow_up_questions"])
+
+            with quality_tab:
+                st.json(agentic["quality"])
+
+            with trace_tab:
+                st.json(agentic["agent_trace"])
 
         st.subheader("Summary")
         st.json(output["summary"])

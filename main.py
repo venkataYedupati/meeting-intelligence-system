@@ -2,15 +2,9 @@ from src.preprocess import (
     load_transcript,
     clean_text,
     save_cleaned_transcript,
-    split_transcript_lines,
-    parse_transcript_lines,
-    extract_action_items,
-    extract_decisions,
 )
-from src.topics import segment_topics
-from src.search import load_embedding_model, semantic_search
-from src.output_formatter import build_meeting_output, save_meeting_output
-from src.summary import generate_meeting_summary
+from src.agentic import run_agentic_analysis
+from src.output_formatter import save_meeting_output
 
 
 def main() -> None:
@@ -22,30 +16,8 @@ def main() -> None:
     cleaned_transcript = clean_text(transcript)
     save_cleaned_transcript(cleaned_transcript, cleaned_output_file)
 
-    lines = split_transcript_lines(transcript)
-    records = parse_transcript_lines(lines)
-
-    action_items = extract_action_items(records)
-    decisions = extract_decisions(records)
-    topics = segment_topics(records)
-
-    model = load_embedding_model()
     query = "What was decided about the demo?"
-    search_results = semantic_search(query, records, model, top_k=3)
-
-    summary = generate_meeting_summary(
-        action_items=action_items,
-        decisions=decisions,
-        topics=topics,
-    )
-
-    final_output = build_meeting_output(
-        summary=summary,
-        action_items=action_items,
-        decisions=decisions,
-        topics=topics,
-        search_results=search_results,
-    )
+    final_output = run_agentic_analysis(transcript, query)
 
     save_meeting_output(final_output, final_output_file)
 

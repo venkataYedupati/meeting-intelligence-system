@@ -7,4 +7,5 @@ fastapi
 uvicorn
 streamlit
 pytest
+httpx<0.28
 python-multipart
